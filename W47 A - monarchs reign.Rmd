@@ -1,0 +1,42 @@
+---
+title: "Homework W47_A"
+author: "au668717"
+date: "2022-11-27"
+output: html_document
+---
+Firstly I create a folder within the Rproj, in which I save the spreadsheet with danish monarchs from Excel as a CSV file:
+
+```{r}
+dir.create("Data")
+```
+
+I then attach the tidyverse package with the library function as this includes multiple packages that I will need to solve this task:
+```{r}
+library(tidyverse)
+```
+
+Next, I ask RStudio to find the spreadsheet of danish monarchs in the Data folder and ask it to read it as a csv2 file (european). 
+I ask for the data to be stored under the name "monarchsReign", allowing for an easy access-way. 
+
+```{r}
+monarchsReign <- read.csv2("Data/monarchs of denmark2.csv")
+```
+
+I'm now ready to do a visualization showing the length of reign for each danish monarch
+I use ggplot and have RStudio reorder the name monarch by their name count (the number in line they ruled as). I have to do this otherwise it will show the monarchs in alphabetical order. 
+The x shows names and the order they ruled in. The y shows how long they ruled for. 
+The visualization is done as a colomn diagram with x and y titles "Monarker" and "Regeringstid". 
+Lastly I make sure that the names of the monarchs is written in a 90 degree angle to be readable.
+
+```{r}
+monarchsReign %>% 
+  select(name_count, name_monarch, reign_length) %>%
+  ggplot(aes(x = reorder(name_monarch, name_count), y = reign_length)) + 
+  geom_col() +
+  labs(title = "Duration of Danish monarchs reign") +
+  xlab("Monarker") +
+  ylab("Regeringstid") +
+  theme(axis.text.x = element_text(angle=90))
+```
+
+As seen on the diagram (plot) Margrethe_II is not on there, since her rule has not yet come to an end. 
