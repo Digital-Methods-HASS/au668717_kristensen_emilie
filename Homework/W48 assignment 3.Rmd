@@ -1,0 +1,251 @@
+---
+title: "W48 assignment 3"
+author: "Emilie Kristensen"
+date: "2022-12-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Creating maps with labels 
+
+Firstly I activate the libraries that I need to use:
+
+
+```{r}
+library(leaflet)
+library(htmlwidgets)
+library(tidyverse)
+```
+
+
+I will firstly show an example of how to put markers/popup boxes on a map of Europe:
+
+I start of by creating labels:
+```{r}
+popup = c("Robin", "Jakub", "Jannes")
+```
+
+
+Next I create a map widget by calling the library, choose a map tile named Esri World Physical, specify the longitude and latitude for the three points belonging to the labels above and make sure that the labels will appear when clicking on the points on the map:
+```{r}
+leaflet() %>%                                
+  addProviderTiles("Esri.WorldPhysical") %>%  
+  addAwesomeMarkers(lng = c(-3, 23, 11),     
+                    lat = c(52, 53, 49),     
+                    popup = popup)            
+```
+
+The following code shows how to layer the different tiles in leaflet. You can choose between the layers by clicking the top right botton: 
+
+```{r}
+leaflet() %>% 
+  addTiles() %>% 
+  setView( lng = 2.34, lat = 48.85, zoom = 5 ) %>%  # let's use setView to navigate to our area
+  addProviderTiles("Esri.WorldPhysical", group = "Physical") %>% 
+  addProviderTiles("Esri.WorldImagery", group = "Aerial") %>% 
+  addProviderTiles("MtbMap", group = "Geo") %>% 
+  
+  addLayersControl(                                 # we are adding layers control to the maps
+    baseGroups = c("Geo","Aerial", "Physical"),
+    options = layersControlOptions(collapsed = T))
+```
+
+## Mapping Sidney, Australia 
+
+Starting out, I use the setView() function in Leaflet to look at Sidney.
+
+```{r}
+leaflet() %>%
+  addTiles() %>%                              # add default OpenStreetMap map tiles
+  addProviderTiles("Esri.WorldImagery",       # add custom Esri World Physical map tiles
+                   options = providerTileOptions(opacity=0.5)) %>%     # make the Esri tile transparent
+  setView(lng = 151.005006, lat = -33.9767231, zoom = 10)              # set the location of the map 
+
+```
+
+
+Secondly, I will be creating a Sidney Harbour display with layers, which is a more complicated map. I start by setting location and zoom level:
+
+
+```{r}
+leaflet() %>% 
+  setView(151.2339084, -33.85089, zoom = 13) %>%
+  addTiles()  # checking I am in the right area
+```
+
+Nextly I will make tile layers just as above in the European map, but only using the Esri backgrounds:
+
+```{r}
+ausMap <- leaflet() %>%   # assign the base location to an object
+  addTiles() %>% 
+  setView(151.2339084, -33.85089, zoom = 13) %>% 
+  addProviderTiles("Esri.WorldPhysical", group = "Physical") %>% 
+  addProviderTiles("Esri.WorldImagery", group = "Aerial") %>% 
+  
+  addLayersControl(baseGroups = c("Aerial", "Physical"), options = layersControlOptions(collapsed = T))
+```
+
+
+```{r}
+esri <- grep("^Esri", providers, value = TRUE)
+```
+
+
+```{r}
+for (provider in esri) {
+  ausMap <-ausMap %>% addProviderTiles(provider, group = provider)
+}
+ausMap
+```
+
+Up next I layer the map out of the components above and write it to an object called AUSmap
+
+```{r}
+AUSmap <- ausMap %>%
+  addLayersControl(baseGroups = names(esri),
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addMiniMap(tiles = esri[[1]], toggleDisplay = TRUE,
+             position = "bottomright") %>%
+  addMeasure(
+    position = "bottomleft",
+    primaryLengthUnit = "meters",
+    primaryAreaUnit = "sqmeters",
+    activeColor = "#3D535D",
+    completedColor = "#7D4479") %>% 
+  htmlwidgets::onRender("
+                        function(el, x) {
+                        var myMap = this;
+                        myMap.on('baselayerchange',
+                        function (e) {
+                        myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+                        })
+                        }") %>% 
+  addControl("", position = "topright")
+```
+
+
+
+Running the above in the below to see the results:
+
+```{r}
+AUSmap
+```
+
+
+```{r}
+saveWidget(AUSmap, "AUSmap.html", selfcontained = TRUE)
+```
+
+
+## 1. - Creating Danish map with esri layers 
+
+I my own task, I need to create a Danish equivalent of AUSmap with esri layers.
+
+Starting off I assign the base location to an object named dkMap. The coordinates chosen is the ones for my families summer/holiday house which I found using Google Maps:
+
+```{r}
+dkMap <- leaflet() %>%   # assign the base location to an object
+  setView(10.69054, 56.2814, zoom = 20)
+```
+
+
+I then ask R to put all Esri backgrounds into an esri object:
+
+```{r}
+esri <- grep("^Esri", providers, value = TRUE)
+```
+
+I can now do so that I can choose which esri background layer to view on the map in the top right corner, as well as a minimap in the bottom right:
+
+```{r}
+for (provider in esri) {
+  dkMap <- dkMap %>% addProviderTiles(provider, group = provider)
+}
+dkMap
+
+DenmarkMap <- dkMap %>%
+  addLayersControl(baseGroups = names(esri),
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addMiniMap(tiles = esri[[1]], toggleDisplay = TRUE,
+             position = "bottomright") %>%
+  addMeasure(
+    position = "bottomleft",
+    primaryLengthUnit = "meters",
+    primaryAreaUnit = "sqmeters",
+    activeColor = "#3D535D",
+    completedColor = "#7D4479") %>% 
+  htmlwidgets::onRender("
+                        function(el, x) {
+                        var myMap = this;
+                        myMap.on('baselayerchange',
+                        function (e) {
+                        myMap.minimap.changeLayer(L.tileLayer.provider(e.name));
+                        })
+                        }") %>% 
+  addControl("", position = "topright")
+
+DenmarkMap
+```
+
+This is one way to visualize a specific coordinate set in a layered map. 
+
+## 2. - Adding Data to Leaflet
+
+
+I this section I manually create machine-readable spatial data from GoogleMaps:
+
+Starting off I entered the coordinates and data of my favorite leisure place in Denmark in the same sheet as my classmates. 
+See the spreadsheet here: https://bit.ly/CreateCoordinates1.
+
+I then read the sheet into R and login in with my gmail information, with the gs4_deauth() function: 
+
+```{r}
+library(tidyverse)
+library(googlesheets4)
+library(leaflet)
+gs4_deauth()
+```
+
+I put the Google data sheet into a data folder in R named "places":
+
+```{r}
+places <- read_sheet("https://docs.google.com/spreadsheets/d/1PlxsPElZML8LZKyXbqdAYeQCDIvDps2McZx1cTVWSzI/edit#gid=124710918",
+                     col_types = "cccnncnc", range="SA2022")
+glimpse(places)
+```
+
+Above you can see a glimpse of the data.
+
+
+I then load the coordinates into a map and check if anything is missing:
+
+```{r}
+leaflet() %>% 
+  addTiles() %>% 
+  addMarkers(lng = places$Longitude, 
+             lat = places$Latitude,
+             popup = paste("Place:", places$Placename,'<br>', "Description:", places$Description,'<br>', "Stars given:", places$Stars1_5),
+             clusterOptions = markerClusterOptions())
+```
+On the map above, you can see all the coodinates of places me and the other students have added to the Google spreadsheets. I have used the cluster function, clusterOption = , to cluster the ones located closed together. 
+
+# 3. - Clustering points
+
+To cluster the points on the map I used the following code:
+
+clusterOptions = markerClusterOptions())
+
+
+## 4. - Look at the map and consider what it is good for and what not
+
+The map is really good if you need to make a quick overview of activities and sights to see in a specific area. In it's current state it doesn't give a lot of information or links etc. This however is something that you can add by making a more complex spreadsheet.   
+
+## 5. - Display notes and classifications
+
+To display notes and classifications, I added the following code to the map with coordinated (line 230):
+
+
+popup = paste("Place:", places$Placename,'<br>', "Description:", places$Description,'<br>', "Stars given:", places$Stars1_5),
