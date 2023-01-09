@@ -1,0 +1,176 @@
+---
+title: "Are we more civilized today?"
+author: "Emilie Kristensen (au668717)"
+date: "'r format(Sys.time(), '%d %B, %Y')'"
+
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message=FALSE)
+```
+This exercise is based on the dataset provided by [OurWorldInData project](https://ourworldindata.org/homicides) based at the Oxford University.
+
+## Issues
+
+Please note that all eval = FALSE, since RStudio showed the following warning when eval = TRUE. This has the consequence of not being able to see the plots in the html files, since they cannot be stored in the EuropeanHomicide_exercise_files\figure-html folder due to the name being 1 character too long. Ideally I would have set eval = TRUE. The following shows the issues and warning message when eval = TRUE:
+
+Quitting from lines 71-78 (EuropeanHomicide_exercise.Rmd) 
+Fejl i png(..., res = dpi, units = "in") : kan ikke starte png()-enhed
+Kald: <Anonymous> ... in_dir -> plot2dev -> do.call -> <Anonymous> -> png
+In addition: Advarselsbeskeder:
+1: I dir.create(dirname(name), recursive = TRUE) :
+  kan ikke oprette mappe 'EuropeanHomicide_exercise_files\figure-html', årsag 'No such file or directory'
+2: I png(..., res = dpi, units = "in") :
+  unable to open file 'EuropeanHomicide_exercise_files/figure-html/plot-homicides-1.png' for writing
+3: I png(..., res = dpi, units = "in") : opening device failed
+
+Kørsel stoppet
+
+## Homicide trends in Western Europe
+
+Understanding how homicide rates have changed prior to the modern era requires the help of historians and archivists. Manuel Eisner, a criminology professor at the University of Cambridge, and his colleagues published the Historical Violence Database \href{https://cjrc.osu.edu/research/interdisciplinary/hvd}: a compilation of data on long-term trends in homicide rates, in addition to qualitative information such as the cause of death, perpetrator and victim. This database is limited to countries with relatively complete historical records on violence and crime – mainly Western Europe and the US.
+
+Starting in the second half of the nineteenth century, these European regions have consistent police records of those accused of murder or manslaughter and annual counts of homicide victims. To go back further in time, reaching as far back as the thirteenth century, Eisner collected estimates (from historical records of coroner reports, court trials, and the police) of homicide rates made in over ninety publications by scholars.
+
+Homicide rates – measured as the number of homicides per 100,000 individuals – up to 1990 are sourced from Eisner’s (2003) publication and the Historical Violence Database. 
+
+
+I am now to answer the following:
+Are homicide rates in Europe today lower or higher than in the past according to data from Italy, England, Germany, the Netherlands and Scandinavia? 
+
+I will be doing so step by step. Firstly I have to load the tidyverse package that allows me to visualize:
+
+```{r library}
+library(tidyverse)
+```
+
+## Creating a path to data
+
+The data is loaded from ourworldindata.org.
+Next I find the data from the data folder, have R read it with the read_csv command and name the path Western Europe which allows me to easily locate for later use: 
+
+```{r load-data}
+Western_Europe <- read_csv("data/homicide-rates-across-western-europe.csv")
+```
+
+## Inspecting the data
+
+I now use the head() function to see how the data frame looks in the first 6 rows.
+
+```{r inspect}
+head(Western_Europe)
+```
+
+How clean and analysis-ready is the dataset?
+  The data looks fine, except for the fourth column name, which is too long. To fix this I use the names() function and relabel the column:
+
+
+```{r relabel column}
+names(Western_Europe)[4] <- "Homicides_per_100k"
+```
+
+I can now move on and actually work with the data. 
+
+## Comparison of long term homicide trends in Western Europe
+
+I now want a visualization of homicides through the years in Western Europe. To do so I use the ggplot() function.
+I have chosen the geom_line() function for the visualization which uses lines and therefore is good to illustrate the change over time.
+To be able to separate the countries from one another, I use the argument color = , so that the countries take on different colors on the graph.
+
+To see visualization go to: https://github.com/Digital-Methods-HASS/au668717_kristensen_emilie and find the .png named "Comparison of long term homicide trends in western"
+
+
+```{r plot-homicides, eval=FALSE}
+ggplot(data = Western_Europe) +
+  geom_line(aes(x = Year, y = Homicides_per_100k, color = Entity))+
+  labs(title = "Homicides in Europe",
+    y = "Homicides per 100k",
+    x = "Year", color="Country")+
+ scale_y_continuous(breaks = seq(0,80,10))+
+  theme(legend.position="bottom")
+```
+
+It is clear to see that the homicide rate decreases significantly over time. 
+
+## Individual countries' homicide trends
+
+To inspect the individual countries homicide rates, I will now make five separate visualizations.
+I just use the ggplot chunk from above, but add facet_wrap() to separate the countries. 
+
+To see visualization go to: https://github.com/Digital-Methods-HASS/au668717_kristensen_emilie and find the .png named "individual countries' homicide trends"
+
+
+```{r eval=FALSE}
+ggplot(data = Western_Europe) + 
+  geom_line(aes(x = Year, y = Homicides_per_100k, color = Entity))+
+  labs(title = "Homicides in Europe",
+       y = "Homicides per 100k",
+       x = "Year")+
+  facet_wrap(~ Entity, ncol = 2, nrow = 3)+
+  labs(color = "Country")+
+  theme(legend.position="bottom")
+
+```
+
+It's clear to see that all countries have a decrease in homicides over time. 
+
+## Danish rulers duration of reign
+
+For the next part of the assignment, I have uploaded the dataset covering the danish monarchs reign, that we created a few weeks back. 
+I created a new column named midyear, which I included in the dataset named danishMonarchs. I found the midyear by using: `midyear` = `endyear` - (`endyear`-`startyear`)/2)
+The midyear was plotted as my x and the duration as my y through ggplot and geom_smooth to helt geometry wise. 
+
+To see visualization go to: https://github.com/Digital-Methods-HASS/au668717_kristensen_emilie and find the .png named "Danish rulers duration of reign".
+
+
+```{r eval=FALSE}
+monarchs <- read.csv2("data/monarchs of denmark2.csv")
+
+danishMonarchs <- monarchs %>% 
+ mutate(midyear = reign_end - (reign_end - reign_start)/2)
+
+danishMonarchs %>% 
+  ggplot(aes(x = midyear, y = reign_length))+
+  geom_smooth()+
+  labs(title = "Danish monarchs through 1900")+
+  theme_bw()
+```
+
+As seen, the graph (visualization) shows that the duration of the reign for the Danish monarchs increases over time (though decreasing after 1800).
+This is the opposite of the homicide rate, which decreases entirely. 
+
+## Final Tasks
+
+1) Plot: In the facetted plot above, move the legend from the current position on the side to below the facets, and label it "Country" instead of "Entity".
+  
+  As you will notice the legend in the above plots is to be seen underneath the plots and not on the sides with the help of the code: p + theme(legend.position="bottom")
+  There is furthermore no Entity to be found on any plots. 
+
+2) Rmarkdown: 
+
+  - edit the author of the document, and convert 'Final Tasks' into heading #2 (like the other headings)
+  
+      Has been done
+  
+  - add a `floating table of contents` to your Rmarkdown document
+  
+      Has been done - see top of document
+  
+  - provide informative `chunk-names` and edit flags in your R chunks
+  
+      Has been done
+      
+  - automatically generate a `timestamp` to show when the document was last updated. (Hint: check the Rmarkdown episode in our Data Carpentry tutorial)
+      
+      Has been done
+
+3) Question: In <250 words articulate your answer on the basis of the data visualisations to the following question: are we more civilized today?
+    
+If we asume that a society is more civilized when the homicide rate is low, the plots above shows that we are more civilized today, due to the fact that the homicide rate     is close to zero. This however is not all that defines whether or not a society is civilized, but if you were to conclude on the results above, then the Western European    states are much more civilized today than 700 years ago, with a clear sign of graduly decrease in homicide and therefore an increase in civility.  
+
